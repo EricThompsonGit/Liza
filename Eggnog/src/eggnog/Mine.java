@@ -67,5 +67,12 @@ public class Mine extends Assignment {
         }
 		 return null;
 	}
+    @Override
+    public String toString() {
+        return "Mine[" +
+                ", ship=" + nShipId +
+                ", planet=" + nTargetId +
+                "]";
+    }
 
 }

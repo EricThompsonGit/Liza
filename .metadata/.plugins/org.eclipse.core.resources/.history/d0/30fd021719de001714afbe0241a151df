@@ -1,0 +1,148 @@
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
+
+import hlt.*;
+
+public class MyBot {
+
+    public static void main(final String[] args) {
+        final Networking networking = new Networking();
+        final GameMap gameMap = networking.initialize("Believe");
+
+        // We now have 1 full minute to analyse the initial map.
+        final String initialMapIntelligence =
+                "width: " + gameMap.getWidth() +
+                "; height: " + gameMap.getHeight() +
+                "; players: " + gameMap.getAllPlayers().size() +
+                "; planets: " + gameMap.getAllPlanets().size();
+        Log.log(initialMapIntelligence);
+
+        final ArrayList<Move> moveList = new ArrayList<>();
+        
+        final int myId = gameMap.getMyPlayerId();
+        Log.log( "My Id = " + myId );
+
+
+        AssignmentList assignments = new AssignmentList();
+
+        for (;;) {
+        	Log.log("Starting a turn");
+            moveList.clear();
+            networking.updateMap(gameMap);
+            
+            // Make sure we give each ship something useful to do
+            Set<Ship> usedShips = new HashSet<Ship>();
+            Set<Planet> claimedPlanets = new HashSet<Planet>();
+
+            assignments.Process(gameMap, moveList, usedShips, claimedPlanets);
+
+            
+            for (final Ship ship : gameMap.getMyPlayer().getShips().values()) {
+            	if( usedShips.contains( ship )) {
+            		continue;
+            	}
+                if (ship.getDockingStatus() != Ship.DockingStatus.Undocked) {
+                	usedShips.add( ship );
+                    continue;
+                }
+
+
+                for (final Planet planet : gameMap.getAllPlanets().values()) {
+                	if( claimedPlanets.contains(planet)) {
+                		continue;
+                	}
+                    if (planet.isOwned()) {
+                    	claimedPlanets.add( planet );
+                        continue;
+                    }
+
+                    if (ship.canDock(planet)) {
+                        moveList.add(new DockMove(ship, planet));
+                        assignments.Add( new Mine( ship.getId(), planet.getId()));
+                        usedShips.add( ship );
+                        claimedPlanets.add( planet );
+                     	Log.log("Docking ship " + ship.getId() + " to planet " + planet.getId());         
+                        break;
+                    }
+
+                    final ThrustMove newThrustMove = Navigation.navigateShipToDock(gameMap, ship, planet, Constants.MAX_SPEED);
+                    if (newThrustMove != null) {
+                        moveList.add(newThrustMove);
+                        assignments.Add( new ClaimPlanet( ship.getId(), planet.getId()));
+                        usedShips.add(ship);
+                        claimedPlanets.add( planet );
+                        Log.log("Navigating ship " + ship.getId() + " to planet " + planet.getId());
+
+                    }
+
+                    break;
+                }
+            }
+            // We have ships moving to all available planets.
+            // If there are any more ships, see if they can dock where they are
+            for (final Ship ship : gameMap.getMyPlayer().getShips().values()) {
+            	if( usedShips.contains(ship)) {
+            		continue;
+            	}
+            	                
+                for (final Planet planet : gameMap.getAllPlanets().values()) {
+
+                    if (ship.canDock(planet) && ( planet.getDockingSpots()> planet.getDockedShips().size())) {
+                        moveList.add(new DockMove(ship, planet));
+                        assignments.Add(new Mine(ship.getId(), planet.getId()));
+                        usedShips.add( ship );
+                    	Log.log("Docking extra ship " + ship.getId() + " to planet " + planet.getId());
+                        break;
+                    }
+                }
+            }
+
+            // We are doing max mining.  Use any remaining ships to go after enemy planets.  We want to overwhelm,
+            // so use at least 20 ships to attack any planet
+            int nMinShipsToAttackPlanet = 20;
+            int nAvailableShips = gameMap.getMyPlayer().getShips().size() - usedShips.size();
+            int numPlanetsToAttack = nAvailableShips / nMinShipsToAttackPlanet;
+            int numShipsPerPlanet = 0;
+            if( numPlanetsToAttack > 0 ) {
+            	numShipsPerPlanet = nAvailableShips / numPlanetsToAttack;
+            }
+            for (final Planet planet : gameMap.getAllPlanets().values()) {
+            	Log.log("Considering attacking planet " + planet.getId());
+            	if( planet.getOwner() != gameMap.getMyPlayerId() ) {
+            		// Found an enemy planet
+            		int nAttackingShips = 0;
+                    for (final Ship ship : gameMap.getMyPlayer().getShips().values()) {
+                    	if( usedShips.contains(ship)) {
+                    		continue;
+                    	}
+                    	// This ship is available. choose one of the docked ships to goes after
+                    	Log.log("Attacking planet " + planet.getId() + " with ship " + ship.getId());
+
+                    	int nDockedCount = planet.getDockedShips().size();
+                    	if( nDockedCount > 0 ) {
+	                    	int shipToAttackIndex = nAttackingShips%nDockedCount;
+	                    	int shipToAttackId = planet.getDockedShips().get(shipToAttackIndex);
+	                    	Assignment a = new AttackMiner( ship.getId(), shipToAttackId);
+	                    	assignments.Add( a );
+	                    	Move m = a.GetMove(gameMap, moveList, usedShips, claimedPlanets);
+	                    	moveList.add( m );
+	                    	Log.log("Using ship " + ship.getId() + " to attack planet " + planet.getId());
+	                    	nAttackingShips++;
+	                    	usedShips.add(ship);
+	                    	if( nAttackingShips >= numShipsPerPlanet ) {
+	                    		break;
+	                    	}
+                    	}
+                    }
+                    break;
+            	}
+            }
+
+            Log.log("Sending Moves");
+            Networking.sendMoves(moveList);
+            Log.log("Moves Sent");
+
+        }
+    }
+}

@@ -1,0 +1,43 @@
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+
+import hlt.GameMap;
+import hlt.Move;
+import hlt.Planet;
+import hlt.Ship;
+
+public class AssignmentList {
+	List<Assignment> Assignments = new ArrayList<Assignment>();
+	
+	void Add( Assignment a ) {
+		Assignments.add(a);
+	}
+	
+	void Process( GameMap gameMap, ArrayList<Move> moveList, Set<Ship> usedShips, Set<Planet> claimedPlanets ){
+		for( Assignment a : Assignments ) {
+			if( a.IsValid(gameMap) ) {
+				Move move = a.GetMove();
+				if( move != null ) {
+					moveList.add( a.GetMove());
+				}
+				Ship ship = findShip( gameMap, a.nShipId );
+				usedShips.add(ship);
+				Planet planet = a.FindPlanet( gameMap );
+				if( planet != null ){
+					claimedPlanets.add(planet);
+				}
+			}
+			
+		}
+	}
+	Ship findShip( GameMap gameMap, int id ) {
+		 for (final Ship ship : gameMap.getMyPlayer().getShips().values()) {
+			 if( ship.getId() == id ) {
+				 return ship;
+			 }
+		 }
+		 return null;
+	}
+	
+}

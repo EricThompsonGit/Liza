@@ -1,0 +1,4 @@
+1513035708685	Delete element
+1513045057490	Extract method 'claimEmptyPlanets'
+1513045149640	Extract method 'mineWherePossible'
+1513045203616	Extract method 'attackEnemyPlanets'

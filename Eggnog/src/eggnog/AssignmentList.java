@@ -26,6 +26,7 @@ public class AssignmentList {
 			Assignment aPrime = a.IsValid(gameMap);
 			if( aPrime != null ) {
 				if( aPrime != a ) {
+					Log.log( "Replacing " + a + " with " + aPrime );
 					assignments.set( i,  aPrime );
 				}
 
@@ -54,6 +55,8 @@ public class AssignmentList {
 					claimedPlanets.add(planet);
 				}
 			}else {
+				Log.log( "Removing " + a  );
+
 				assignments.remove( i );
 				i--;
 			}

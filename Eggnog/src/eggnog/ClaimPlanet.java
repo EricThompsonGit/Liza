@@ -102,5 +102,12 @@ public class ClaimPlanet extends Assignment {
         
         return null;
  	}
+    @Override
+    public String toString() {
+        return "ClaimPlanet[" +
+                ", ship=" + nShipId +
+                ", planet=" + nTargetId +
+                "]";
+    }
 
 }

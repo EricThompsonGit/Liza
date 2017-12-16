@@ -1,0 +1,19 @@
+
+import Drowsy.MyBot;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import Drowsy.hlt.*;
+
+public class ABot {
+
+    public static void main(final String[] args) {
+    	MyBot bot = new MyBot();
+    	bot.run();
+	}
+
+}

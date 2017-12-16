@@ -27,20 +27,20 @@ public class AttackMiner extends Assignment {
 		// Check that the ship still exists, and that the planet is still unclaimed
 		Ship ship = FindShip( gameMap );
 		if( ship == null ) return null;
-		if( ship.getOwner() == gameMap.getMyPlayerId()) return null;
+		Planet planet = FindPlanet( gameMap, nPlanet );
+		if( planet == null ) {
+			return null;
+		}
+		if( planet.isOwned() && (planet.getOwner() == gameMap.getMyPlayerId())) return null;
+
 		
 		Ship miner = FindOtherShip( gameMap );
 		if( miner == null ) {
 			// The enemy ship we were sent to attack is gone.  See if there is another one
-			Planet planet = FindPlanet( gameMap, nPlanet );
 			if( planet == null ) {
 				return null;
 			}
 			if( planet.isOwned() ) {
-				if(  planet.getOwner() == gameMap.getMyPlayerId()) {
-					Log.log("Claim Planet Invalid, I own this planet");
-					return null;
-				}
 				// Someone else owns this planet, so attack them
 				if( planet.getDockedShips().size() > 0 ) {
 					int enemy = planet.getDockedShips().get(0);
@@ -102,5 +102,13 @@ public class AttackMiner extends Assignment {
         }
 		 return null;
 	}
+    @Override
+    public String toString() {
+        return "AttackMiner[" +
+                ", ship=" + nShipId +
+                ", planet=" + nPlanet +
+                ", miner=" + nTargetId +
+                "]";
+    }
 
 }
