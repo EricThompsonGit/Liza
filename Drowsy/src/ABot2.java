@@ -1,0 +1,12 @@
+
+import drowsy.Bot;
+
+
+public class ABot2 {
+
+    public static void main(final String[] args) {
+    	Bot bot = new Bot( "ABot2");
+    	bot.run();
+	}
+
+}
