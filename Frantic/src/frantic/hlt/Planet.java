@@ -1,4 +1,4 @@
-package eggnog.hlt;
+package frantic.hlt;
 
 import java.util.Collections;
 import java.util.List;
@@ -9,7 +9,6 @@ public class Planet extends Entity {
     private final int currentProduction;
     private final int dockingSpots;
     private final List<Integer> dockedShips;
-    private List<Integer> assignedShips;
 
     public Planet(final int owner, final int id, final double xPos, final double yPos, final int health,
                   final double radius, final int dockingSpots, final int currentProduction,
