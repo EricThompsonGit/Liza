@@ -1,10 +1,12 @@
 package eggnog.hlt;
 
+import eggnog.hlt.Ship.DockingStatus;
+
 public class Entity extends Position {
 
-    private final int owner;
+    private int owner;
     private final int id;
-    private final int health;
+    private int health;
     private final double radius;
 
     public Entity(final int owner, final int id, final double xPos, final double yPos, final int health, final double radius) {
@@ -41,4 +43,10 @@ public class Entity extends Position {
                 ", radius=" + radius +
                 "]";
     }
+	public void setHealth( int healthIn ) {
+		health = healthIn;
+	}
+	public void setOwner( int ownerIn ) {
+		owner = ownerIn;
+	}
 }

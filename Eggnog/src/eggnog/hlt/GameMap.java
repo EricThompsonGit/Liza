@@ -4,30 +4,25 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
-import java.util.Collections;
 import java.util.Collection;
 
 public class GameMap {
     private final int width, height;
     private final int playerId;
-    private final List<Player> players;
-    private final List<Player> playersUnmodifiable;
+    private final Map<Integer, Player> players;
     private final Map<Integer, Planet> planets;
-    private final List<Ship> allShips;
-    private final List<Ship> allShipsUnmodifiable;
+    private final Map<Integer, Ship> allShips;
 
     // used only during parsing to reduce memory allocations
-    private final List<Ship> currentShips = new ArrayList<>();
+    //private final List<Ship> currentShips = new ArrayList<>();
 
     public GameMap(final int width, final int height, final int playerId) {
         this.width = width;
         this.height = height;
         this.playerId = playerId;
-        players = new ArrayList<>(Constants.MAX_PLAYERS);
-        playersUnmodifiable = Collections.unmodifiableList(players);
+        players = new TreeMap<>();
         planets = new TreeMap<>();
-        allShips = new ArrayList<>();
-        allShipsUnmodifiable = Collections.unmodifiableList(allShips);
+        allShips = new TreeMap<>();
     }
 
     public int getHeight() {
@@ -42,8 +37,8 @@ public class GameMap {
         return playerId;
     }
 
-    public List<Player> getAllPlayers() {
-        return playersUnmodifiable;
+    public Map<Integer, Player> getAllPlayers() {
+        return players;
     }
 
     public Player getMyPlayer() {
@@ -62,15 +57,15 @@ public class GameMap {
         return planets;
     }
 
-    public List<Ship> getAllShips() {
-        return allShipsUnmodifiable;
+    public Map<Integer,Ship> getAllShips() {
+        return allShips;
     }
 
     public ArrayList<Entity> objectsBetween(Position start, Position target) {
         final ArrayList<Entity> entitiesFound = new ArrayList<>();
 
         addEntitiesBetween(entitiesFound, start, target, planets.values());
-        addEntitiesBetween(entitiesFound, start, target, allShips);
+        addEntitiesBetween(entitiesFound, start, target, allShips.values());
 
         return entitiesFound;
     }
@@ -99,7 +94,7 @@ public class GameMap {
             entityByDistance.put(entity.getDistanceTo(planet), planet);
         }
 
-        for (final Ship ship : allShips) {
+        for (final Ship ship : allShips.values()) {
             if (ship.equals(entity)) {
                 continue;
             }
@@ -112,32 +107,57 @@ public class GameMap {
     public GameMap updateMap(final Metadata mapMetadata) {
         final int numberOfPlayers = MetadataParser.parsePlayerNum(mapMetadata);
 
-        players.clear();
-        planets.clear();
-        allShips.clear();
+//        players.clear();
+//        planets.clear();
+//        allShips.clear();
+        for( Ship ship : allShips.values()) {
+        	ship.setHealth(0);
+        }
 
         // update players info
         for (int i = 0; i < numberOfPlayers; ++i) {
-            currentShips.clear();
-            final Map<Integer, Ship> currentPlayerShips = new TreeMap<>();
+            //currentShips.clear();
+           // final Map<Integer, Ship> currentPlayerShips = new TreeMap<>();
             final int playerId = MetadataParser.parsePlayerId(mapMetadata);
 
-            final Player currentPlayer = new Player(playerId, currentPlayerShips);
-            MetadataParser.populateShipList(currentShips, playerId, mapMetadata);
-            allShips.addAll(currentShips);
-
-            for (final Ship ship : currentShips) {
-                currentPlayerShips.put(ship.getId(), ship);
+            Player player = null;
+            if( players.containsKey( playerId )) {
+            	player = players.get( playerId );
+            	player.clearShips();
+            }else {
+            	player = new Player( playerId );
             }
-            players.add(currentPlayer);
+            MetadataParser.updateShipList(allShips, player, mapMetadata);
+            
+//            for (final Ship ship : currentShips) {
+//                currentPlayerShips.put(ship.getId(), ship);
+//            }
+//            players.add(currentPlayer);
+        }
+        for( Integer id : allShips.keySet()) {
+        	Ship ship = allShips.get( id );
+        	if( ship.getHealth() == 0 ) {
+        		allShips.remove( id );
+        	}
         }
 
         final int numberOfPlanets = Integer.parseInt(mapMetadata.pop());
 
+        for( Planet planet : planets.values()) {
+        	planet.setHealth(0);
+        }
+
         for (int i = 0; i < numberOfPlanets; ++i) {
-            final List<Integer> dockedShips = new ArrayList<>();
-            final Planet planet = MetadataParser.newPlanetFromMetadata(dockedShips, mapMetadata);
-            planets.put(planet.getId(), planet);
+//            final List<Integer> dockedShips = new ArrayList<>();
+//            final Planet planet = MetadataParser.newPlanetFromMetadata(dockedShips, mapMetadata);
+//            planets.put(planet.getId(), planet);
+        	MetadataParser.updatePlanetFromMetadata( planets, mapMetadata );
+        }
+        for( Integer id : planets.keySet()) {
+        	Planet planet = planets.get( id );
+        	if( planet.getHealth() == 0 ) {
+        		planets.remove( id );
+        	}
         }
 
         if (!mapMetadata.isEmpty()) {

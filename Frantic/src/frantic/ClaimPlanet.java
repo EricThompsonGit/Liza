@@ -10,13 +10,24 @@ import frantic.hlt.Log;
 import frantic.hlt.Move;
 import frantic.hlt.Navigation;
 import frantic.hlt.Planet;
+import frantic.hlt.Position;
 import frantic.hlt.Ship;
 import frantic.hlt.ThrustMove;
 
 public class ClaimPlanet extends Assignment {
 
+	private boolean posSet = false;
+	private Position targetPos;
+	
 	public ClaimPlanet(int shipId, int target) {
 		super(shipId, target);
+		// TODO Auto-generated constructor stub
+	}
+
+	public ClaimPlanet(int shipId, int target, Position targetPos ) {
+		super(shipId, target);
+		this.targetPos = targetPos;
+		posSet = true;
 		// TODO Auto-generated constructor stub
 	}
 
@@ -51,12 +62,10 @@ public class ClaimPlanet extends Assignment {
 
 	
 	Planet FindPlanet( GameMap gameMap ) {
-         for (final Planet planet : gameMap.getAllPlanets().values()) {
-             if (planet.getId() == nTargetId ) {
-             	return planet;
-             }
-         }
-		 return null;
+		if(gameMap.getAllPlanets().containsKey( nTargetId )) {
+			return gameMap.getAllPlanets().get( nTargetId );
+		}
+		return null;
 	}
      	
  	Move GetMove( GameMap gameMap, ArrayList<Move> moveList, Set<Ship> usedShips, Set<Planet> claimedPlanets) {
@@ -90,12 +99,21 @@ public class ClaimPlanet extends Assignment {
     		}
         }
 
-        final ThrustMove newThrustMove = Navigation.navigateShipToDock(gameMap, ship, planet, Constants.MAX_SPEED);
-        if (newThrustMove != null) {
+        Move move = null;
+        if( posSet ) {
+        	Log.log( "Navigate toward planet position");    
+        	Log.log("Ship = " + ship );
+        	Log.log("TargetPosition = " + targetPos );
+        	move = Navigation.navigateShipTowardsTarget(gameMap, ship, targetPos, Constants.MAX_SPEED, true, Constants.MAX_NAVIGATION_CORRECTIONS, Math.PI/180.0);
+        	Log.log("Move = " + move + ", thrust = " + ((ThrustMove)move).getThrust());
+        }else {
+        	move = Navigation.navigateShipToDock(gameMap, ship, planet, Constants.MAX_SPEED);
+        }
+        if (move != null) {
             usedShips.add(ship);
             claimedPlanets.add( planet );
             Log.log("Navigating ship " + ship.getId() + " to planet " + planet.getId());
-            return newThrustMove;
+            return move;
         }else {
         	Log.log("Invalid thrust move");
         }

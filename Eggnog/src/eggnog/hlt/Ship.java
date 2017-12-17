@@ -4,10 +4,10 @@ public class Ship extends Entity {
 
     public enum DockingStatus { Undocked, Docking, Docked, Undocking }
 
-    private final DockingStatus dockingStatus;
-    private final int dockedPlanet;
-    private final int dockingProgress;
-    private final int weaponCooldown;
+    private DockingStatus dockingStatus;
+    private int dockedPlanet;
+    private int dockingProgress;
+    private int weaponCooldown;
 
     public Ship(final int owner, final int id, final double xPos, final double yPos,
                 final int health, final DockingStatus dockingStatus, final int dockedPlanet,
@@ -51,4 +51,20 @@ public class Ship extends Entity {
                 ", weaponCooldown=" + weaponCooldown +
                 "]";
     }
+	public void setDockingStatus( DockingStatus dockingStatusIn ) {
+		dockingStatus = dockingStatusIn;
+	}
+    
+	public void setDockedPlanet( int dockedPlanetIn ) {
+		dockedPlanet = dockedPlanetIn;
+	}
+	
+	public void setDockingProgress( int dockingProgressIn ) {
+		dockingProgress = dockingProgressIn;		
+	}
+	
+	public void setWeaponCooldown( int weaponCooldownIn ) {
+		weaponCooldown = weaponCooldownIn;
+	}
+
 }

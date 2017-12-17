@@ -1,14 +1,15 @@
 package eggnog.hlt;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 public class Planet extends Entity {
 
-    private final int remainingProduction;
-    private final int currentProduction;
-    private final int dockingSpots;
-    private final List<Integer> dockedShips;
+    private int remainingProduction;
+    private int currentProduction;
+    private int dockingSpots;
+    private List<Integer> dockedShips;
     private List<Integer> assignedShips;
 
     public Planet(final int owner, final int id, final double xPos, final double yPos, final int health,
@@ -22,6 +23,17 @@ public class Planet extends Entity {
         this.remainingProduction = remainingProduction;
         this.dockedShips = Collections.unmodifiableList(dockedShips);
     }
+    public Planet(final int owner, final int id, final double xPos, final double yPos, final int health,
+            final double radius, final int dockingSpots, final int currentProduction,
+            final int remainingProduction) {
+
+		  super(owner, id, xPos, yPos, health, radius);
+		
+		  this.dockingSpots = dockingSpots;
+		  this.currentProduction = currentProduction;
+		  this.remainingProduction = remainingProduction;
+		  dockedShips = new ArrayList<Integer>();
+	}
 
     public int getRemainingProduction() {
         return remainingProduction;
@@ -57,4 +69,13 @@ public class Planet extends Entity {
                 ", dockedShips=" + dockedShips +
                 "]";
     }
+
+
+	public void clearDockedShipList() {
+		dockedShips.clear();
+	}
+
+	public void addShip(int id) {
+		dockedShips.add(id);
+	}
 }

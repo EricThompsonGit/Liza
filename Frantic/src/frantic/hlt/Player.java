@@ -13,6 +13,10 @@ public class Player {
         this.id = id;
         this.ships = Collections.unmodifiableMap(ships);
     }
+    public Player(final int id) {
+        this.id = id;
+        this.ships = new TreeMap<Integer, Ship>();
+    }
 
     public Map<Integer, Ship> getShips() {
         return ships;
@@ -24,5 +28,11 @@ public class Player {
 
     public int getId() {
         return id;
+    }
+    public void clearShips() {
+    	ships.clear();
+    }
+    public void addShip( Ship ship ) {
+    	ships.put( ship.getId(), ship);
     }
 }

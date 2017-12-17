@@ -2,8 +2,8 @@ package frantic.hlt;
 
 public class Position {
 
-    private final double xPos;
-    private final double yPos;
+    private double xPos;
+    private double yPos;
 
     public Position(final double xPos, final double yPos) {
         this.xPos = xPos;
@@ -17,6 +17,11 @@ public class Position {
     public double getYPos() {
         return yPos;
     }
+    
+	public void setPosition( double xPosIn, double yPosIn ) {
+		xPos = xPosIn;
+		yPos = yPosIn;
+	}
 
     public double getDistanceTo(final Position target) {
         final double dx = xPos - target.getXPos();

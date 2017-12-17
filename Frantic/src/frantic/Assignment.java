@@ -36,7 +36,7 @@ public class Assignment {
 	}
 	
 	Ship FindOtherShip( GameMap gameMap ) {
-		 for (final Ship ship : gameMap.getAllShips()) {
+		 for (final Ship ship : gameMap.getAllShips().values()) {
 			 if( ship.getId() == nTargetId ) {
 				 return ship;
 			 }
