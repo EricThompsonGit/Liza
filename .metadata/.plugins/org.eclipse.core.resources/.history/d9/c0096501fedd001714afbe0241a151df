@@ -1,9 +1,0 @@
-
-public class Mine extends Assignment {
-
-	public Mine(int shipId, int target) {
-		super(shipId, target);
-		// TODO Auto-generated constructor stub
-	}
-
-}

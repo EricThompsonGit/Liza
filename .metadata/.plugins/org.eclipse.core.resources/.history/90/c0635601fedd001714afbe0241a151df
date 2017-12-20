@@ -1,9 +1,0 @@
-
-public class AttackMiner extends Assignment {
-
-	public AttackMiner(int shipId, int target) {
-		super(shipId, target);
-		// TODO Auto-generated constructor stub
-	}
-
-}

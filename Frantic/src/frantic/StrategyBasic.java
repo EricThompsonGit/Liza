@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import frantic.hlt.Assignment;
 import frantic.hlt.Constants;
 import frantic.hlt.DockMove;
 import frantic.hlt.Entity;
@@ -22,7 +23,7 @@ import frantic.hlt.ThrustMove;
 public class StrategyBasic extends Strategy {
 
 	@Override
-	public void getInitialAssignments( GameMap gameMap, AssignmentList assignments ) {
+	public void getInitialAssignments( GameMap gameMap ) {
     	// Choose three closest planets such that paths don't cross
     	List<Planet> closePlanets = new ArrayList<Planet>();
     	List<Ship> myShips = new ArrayList<Ship>();
@@ -57,31 +58,34 @@ public class StrategyBasic extends Strategy {
             		shipClosest = ship;
             	}   			
     		}
-    		Assignment a = new ClaimPlanet( shipClosest.getId(), planet.getId());
-    		assignments.Add( a );
+    		shipClosest.setAssignment(new ClaimPlanet( shipClosest, planet));
     		myShips.remove(shipClosest);
     	}
     }
 
 	@Override
-	public void calculateMoves(GameMap gameMap, ArrayList<Move> moveList, AssignmentList assignments) {
+	public void calculateMoves(GameMap gameMap, ArrayList<Move> moveList) {
 		// Make sure we give each ship something useful to do
 		Set<Ship> usedShips = new HashSet<Ship>();
 		Set<Planet> claimedPlanets = new HashSet<Planet>();
 		Map<Integer,Integer> shipsPerPlanet = new HashMap<Integer, Integer>();
 
-		assignments.Process(gameMap, moveList, usedShips, claimedPlanets, shipsPerPlanet);
+		cleanUpDefenders( gameMap, usedShips);
 
+		processAssignments(gameMap, moveList, usedShips, claimedPlanets, shipsPerPlanet);
+
+		allocateDefenders( gameMap, usedShips );
 		
-		claimEmptyPlanets(gameMap, moveList, assignments, usedShips, claimedPlanets);
+		mineWherePossible(gameMap, moveList, usedShips);
+
+		claimEmptyPlanets(gameMap, moveList, usedShips, claimedPlanets);
 		// We have ships moving to all available planets.
 		// If there are any more ships, see if they can dock where they are
-		mineWherePossible(gameMap, moveList, assignments, usedShips);
-
 		// We are doing max mining.  Use any remaining ships to go after enemy planets.  We want to overwhelm,
 		// so use at least 20 ships to attack any planet
 		
+		attackStrongestEnemyMultiplePlanets(gameMap, moveList, usedShips, claimedPlanets, shipsPerPlanet);
 		
-		attackStrongestEnemyMultiplePlanets(gameMap, moveList, assignments, usedShips, claimedPlanets, shipsPerPlanet);
+		defendPlanets( gameMap, moveList );
 	}
 }

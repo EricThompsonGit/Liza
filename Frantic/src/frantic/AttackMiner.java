@@ -3,6 +3,7 @@ package frantic;
 import java.util.ArrayList;
 import java.util.Set;
 
+import frantic.hlt.Assignment;
 import frantic.hlt.Constants;
 import frantic.hlt.DockMove;
 import frantic.hlt.GameMap;
@@ -16,56 +17,70 @@ import frantic.hlt.Ship.DockingStatus;
 
 public class AttackMiner extends Assignment {
 
-	int nPlanet = 0;
-	public AttackMiner(int shipId, int miner, int planet) {
-		super(shipId, miner);
-		nPlanet = planet;
+	private Planet planet;
+	private Ship enemy;
+	
+	//int nPlanet = 0;
+	public AttackMiner(Ship ship, Ship miner, Planet planet) {
+		super(ship);
+		this.planet = planet;
+		this.enemy = miner;
 		// TODO Auto-generated constructor stub
 	}
 
-	Assignment IsValid(GameMap gameMap) {
+	public Planet getPlanet() {
+		return planet;
+	}
+	public Assignment isValid(GameMap gameMap) {
 		// Check that the ship still exists, and that the planet is still unclaimed
-		Ship ship = FindShip( gameMap );
 		if( ship == null ) return null;
-		Planet planet = FindPlanet( gameMap, nPlanet );
-		if( planet == null ) {
+		if( planet == null  ) {
 			return null;
 		}
 		if( planet.isOwned() && (planet.getOwner() == gameMap.getMyPlayerId())) return null;
 
 		
-		Ship miner = FindOtherShip( gameMap );
-		if( miner == null ) {
+		if( enemy == null || enemy.getHealth() == 0 ) {
 			// The enemy ship we were sent to attack is gone.  See if there is another one
-			if( planet == null ) {
+			if(( planet == null )  || ( planet.getHealth() == 0 )) {
+				ship.setAssignment(null);
 				return null;
 			}
 			if( planet.isOwned() ) {
-				// Someone else owns this planet, so attack them
-				if( planet.getDockedShips().size() > 0 ) {
-					int enemy = planet.getDockedShips().get(0);
-					return new AttackMiner( nShipId, enemy, nPlanet );
+				if( planet.getOwner() != gameMap.getMyPlayerId()) {
+					// Someone else owns this planet, so attack them
+					if( planet.getDockedShips().size() > 0 ) {
+						int enemyId = planet.getDockedShips().get(0);
+						Ship enemy = gameMap.getAllShips().get(enemyId);
+						ship.setAssignment(new AttackMiner( ship, enemy, planet ));
+						return ship.getAssignment();
+					}else {
+						// I own this planet, add another miner if there is room
+						if( planet.getDockingSpots() > planet.getDockedShips().size()) {
+							ship.setAssignment(new Mine( ship, planet ));
+							return ship.getAssignment();
+						}
+					}
 				}
+				ship.setAssignment(null);
 				return null;
 			}
 			else {
-				return new Mine( nShipId, nPlanet );
+				ship.setAssignment(new Mine( ship, planet ));
+				return ship.getAssignment();
 			}
 		}
-		if( miner.getDockingStatus() != DockingStatus.Undocked) {				
+		if( enemy.getDockingStatus() != DockingStatus.Undocked) {				
 			return this;
 		}
 				
 		return this;
 	}
 	
- 	Move GetMove( GameMap gameMap, ArrayList<Move> moveList, Set<Ship> usedShips, Set<Planet> claimedPlanets) {
- 		Ship ship = FindShip(gameMap );
- 		Ship miner = FindOtherShip( gameMap );
- 		Planet planet = FindPlanet( gameMap, nPlanet );
+ 	public Move getMove( GameMap gameMap, ArrayList<Move> moveList, Set<Ship> usedShips, Set<Planet> claimedPlanets) {
 
- 		if( miner == null)  {
- 			Log.log("Attack Miner: miner invalid" );
+ 		if( enemy == null)  {
+ 			Log.log("Attack Miner: enemy invalid" );
  		}
  		if( ship == null)  {
  			Log.log("Attack Miner: ship invalid" );
@@ -75,18 +90,18 @@ public class AttackMiner extends Assignment {
  			return null;
  		}
 
- 	 	if(( miner != null) && ( ship != null )) {
+ 	 	if(( enemy != null) && ( ship != null )) {
  	 		ThrustMove move = null;
  	 		if( ship.canDock(planet)) {
  	 			// We are close
- 		 		move = Navigation.navigateShipTowardsTarget(gameMap, ship, ship.getClosestPoint(miner), Constants.MAX_SPEED, true, Constants.MAX_NAVIGATION_CORRECTIONS, Math.PI/180.0);
+ 		 		move = Navigation.navigateShipTowardsTarget(gameMap, ship, ship.getClosestPoint(enemy), Constants.MAX_SPEED, true, Constants.MAX_NAVIGATION_CORRECTIONS, Math.PI/180.0);
  	 		}else {
- 		 		move = Navigation.navigateShipTowardsTarget(gameMap, ship, ship.getClosestPoint(miner), Constants.MAX_SPEED, true, Constants.MAX_NAVIGATION_CORRECTIONS, Math.PI/180.0);
+ 		 		move = Navigation.navigateShipTowardsTarget(gameMap, ship, ship.getClosestPoint(enemy), Constants.MAX_SPEED, true, Constants.MAX_NAVIGATION_CORRECTIONS, Math.PI/180.0);
  	 			//move = Navigation.navigateShipToDock(gameMap, ship, planet, Constants.MAX_SPEED);
  	 		}
 	        if (move != null) {
 	            usedShips.add(ship);
-	            Log.log("Navigating ship " + ship.getId() + " to miner " + miner.getId());
+	            Log.log("Navigating ship " + ship.getId() + " to miner " + enemy.getId());
 	            Log.log("Thrust Move " + move.getThrust());
 	            return move;
 	
@@ -94,20 +109,13 @@ public class AttackMiner extends Assignment {
         }
         return null;
  	}
-	Planet FindPlanet( GameMap gameMap, int nPlanetId ) {
-        for (final Planet planet : gameMap.getAllPlanets().values()) {
-            if (planet.getId() == nPlanetId ) {
-            	return planet;
-            }
-        }
-		 return null;
-	}
+
     @Override
     public String toString() {
         return "AttackMiner[" +
-                ", ship=" + nShipId +
-                ", planet=" + nPlanet +
-                ", miner=" + nTargetId +
+                ", ship=" + ship.getId() +
+                ", planet=" + planet.getId() +
+                ", miner=" + enemy.getId() +
                 "]";
     }
 

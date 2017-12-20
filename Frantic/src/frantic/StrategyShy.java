@@ -22,7 +22,7 @@ import frantic.hlt.ThrustMove;
 public class StrategyShy extends Strategy {
 
 	@Override
-	public void getInitialAssignments(GameMap gameMap, AssignmentList assignments) {
+	public void getInitialAssignments(GameMap gameMap) {
 		// Pick the closest planet that is away from my opponents
 		int centerX = gameMap.getWidth()/2;
 		int centerY = gameMap.getHeight()/2;
@@ -82,35 +82,43 @@ public class StrategyShy extends Strategy {
 	    Position pos1 = new Position( pos.getXPos() + dy*2, pos.getYPos() -dx*2 );
 	    Position pos2 = new Position( pos.getXPos() - dy*2, pos.getYPos() + dx*2 );
 	    
-	    assignments.Add( new ClaimPlanet(middleShip.getId(), selectedPlanet.getId(), pos ));
+	    middleShip.setAssignment(new ClaimPlanet(middleShip, selectedPlanet, pos ));
 	    if( pos1.getYPos() > pos2.getYPos()) {
-		    assignments.Add( new ClaimPlanet(topShip.getId(), selectedPlanet.getId(), pos1 ));
-		    assignments.Add( new ClaimPlanet(bottomShip.getId(), selectedPlanet.getId(), pos2 ));	    	
+		    topShip.setAssignment(new ClaimPlanet(topShip, selectedPlanet, pos1 ));
+		    bottomShip.setAssignment(new ClaimPlanet(bottomShip, selectedPlanet, pos2 ));
 	    }else {
-		    assignments.Add( new ClaimPlanet(topShip.getId(), selectedPlanet.getId(), pos2 ));
-		    assignments.Add( new ClaimPlanet(bottomShip.getId(), selectedPlanet.getId(), pos1 ));	    		    	
+		    topShip.setAssignment(new ClaimPlanet(topShip, selectedPlanet, pos2 ));
+		    bottomShip.setAssignment(new ClaimPlanet(bottomShip, selectedPlanet, pos1 ));
 	    }
 	}
 
 	@Override
-	public void calculateMoves(GameMap gameMap, ArrayList<Move> moveList, AssignmentList assignments) {
+	public void calculateMoves(GameMap gameMap, ArrayList<Move> moveList) {
 		// Make sure we give each ship something useful to do
 		Set<Ship> usedShips = new HashSet<Ship>();
 		Set<Planet> claimedPlanets = new HashSet<Planet>();
 		Map<Integer,Integer> shipsPerPlanet = new HashMap<Integer, Integer>();
 
-		assignments.Process(gameMap, moveList, usedShips, claimedPlanets, shipsPerPlanet);
+		cleanUpDefenders( gameMap, usedShips);
 
-		mineWherePossible(gameMap, moveList, assignments, usedShips);
+		processAssignments(gameMap, moveList, usedShips, claimedPlanets, shipsPerPlanet);
+		
+		allocateDefenders( gameMap, usedShips );
+
+		mineWherePossible(gameMap, moveList, usedShips);
 		
 		// We are mining where we can, now claim a nearby empty planet
-		claimEmptyPlanets(gameMap, moveList, assignments, usedShips, claimedPlanets);
+		claimEmptyPlanets(gameMap, moveList, usedShips, claimedPlanets);
 		// We have ships moving to all available planets.
 
 		// We are doing max mining.  Use any remaining ships to go after enemy planets.  We want to overwhelm,
 		// so use at least 20 ships to attack any planet
 			
-		attackClosestEnemySinglePlanet(gameMap, moveList, assignments, usedShips, claimedPlanets, shipsPerPlanet);
+		//attackClosestEnemySinglePlanet(gameMap, moveList, usedShips, claimedPlanets, shipsPerPlanet);
+		attackStrongestEnemyMultiplePlanets(gameMap, moveList, usedShips, claimedPlanets, shipsPerPlanet);
+		
+		defendPlanets( gameMap, moveList );
+
 	}
 
 }

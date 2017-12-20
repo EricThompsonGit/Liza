@@ -3,6 +3,7 @@ package frantic;
 import java.util.ArrayList;
 import java.util.Set;
 
+import frantic.hlt.Assignment;
 import frantic.hlt.Constants;
 import frantic.hlt.DockMove;
 import frantic.hlt.GameMap;
@@ -16,30 +17,33 @@ import frantic.hlt.ThrustMove;
 
 public class ClaimPlanet extends Assignment {
 
+	private Planet planet;
 	private boolean posSet = false;
 	private Position targetPos;
 	
-	public ClaimPlanet(int shipId, int target) {
-		super(shipId, target);
-		// TODO Auto-generated constructor stub
+	public ClaimPlanet(Ship ship, Planet planet) {
+		super(ship);
+		this.planet = planet;
 	}
 
-	public ClaimPlanet(int shipId, int target, Position targetPos ) {
-		super(shipId, target);
+	public ClaimPlanet(Ship ship, Planet planet, Position targetPos ) {
+		super(ship);
+		this.planet = planet;
 		this.targetPos = targetPos;
 		posSet = true;
 		// TODO Auto-generated constructor stub
 	}
+	public Planet getPlanet() {
+		return planet;
+	}
 
 	
-	Assignment IsValid(GameMap gameMap) {
+	public Assignment isValid(GameMap gameMap) {
 		// Check that the ship still exists, and that the planet is still unclaimed
-		Ship ship = FindShip( gameMap );
 		if( ship == null ) {
 			Log.log("Claim Planet Invalid, can't find ship");
 			return null;
 		}
-		Planet planet = FindPlanet( gameMap );
 		if( planet == null ) {
 			Log.log("Claim Planet Invalid, can't find planet");
 			return null;
@@ -51,8 +55,10 @@ public class ClaimPlanet extends Assignment {
 			}
 			// Someone else owns this planet, so attack them
 			if( planet.getDockedShips().size() > 0 ) {
-				int enemy = planet.getDockedShips().get(0);
-				return new AttackMiner( nShipId, enemy, planet.getId() );
+				int enemyId = planet.getDockedShips().get(0);
+				Ship enemy = gameMap.getAllShips().get( enemyId );
+				ship.setAssignment(new AttackMiner( ship, enemy, planet ));
+				return ship.getAssignment();
 			}
 			return this;
 		}
@@ -60,20 +66,11 @@ public class ClaimPlanet extends Assignment {
 		return this;
 	}
 
-	
-	Planet FindPlanet( GameMap gameMap ) {
-		if(gameMap.getAllPlanets().containsKey( nTargetId )) {
-			return gameMap.getAllPlanets().get( nTargetId );
-		}
-		return null;
-	}
      	
- 	Move GetMove( GameMap gameMap, ArrayList<Move> moveList, Set<Ship> usedShips, Set<Planet> claimedPlanets) {
- 		Ship ship = FindShip(gameMap );
- 		if( ship == null ) {
+ 	public Move getMove( GameMap gameMap, ArrayList<Move> moveList, Set<Ship> usedShips, Set<Planet> claimedPlanets) {
+  		if( ship == null ) {
  			Log.log("Claim Planet- Null Ship");
  		}
- 		Planet planet = FindPlanet( gameMap );
  		if( planet == null ) {
  			Log.log("Claim Planet- Null Planet");
  		}
@@ -84,16 +81,22 @@ public class ClaimPlanet extends Assignment {
 		            Move move =new DockMove(ship, planet);
 		            usedShips.add( ship );
 		            claimedPlanets.add( planet );
-		         	Log.log("Docking ship " + ship.getId() + " to planet " + planet.getId());         
+		         	Log.log("Docking ship " + ship.getId() + " to planet " + planet.getId()); 
+		         	ship.setAssignment(new Mine(ship, planet));
 		            return move;
     			}else {
-    				return null;
+    				int enemyId = planet.getDockedShips().get(0);
+    				Ship enemy = gameMap.getAllShips().get(enemyId);
+    				ship.setAssignment( new AttackMiner(ship, enemy, planet));
+    				return ship.getAssignment().getMove( gameMap, moveList, usedShips, claimedPlanets);
+    				//return null;
     			}
     		}else {
 	            Move move =new DockMove(ship, planet);
 	            usedShips.add( ship );
 	            claimedPlanets.add( planet );
-	         	Log.log("Docking ship " + ship.getId() + " to planet " + planet.getId());         
+	         	Log.log("Docking ship " + ship.getId() + " to planet " + planet.getId());  
+	         	ship.setAssignment(new Mine(ship, planet ));
 	            return move;
     			
     		}
@@ -105,7 +108,9 @@ public class ClaimPlanet extends Assignment {
         	Log.log("Ship = " + ship );
         	Log.log("TargetPosition = " + targetPos );
         	move = Navigation.navigateShipTowardsTarget(gameMap, ship, targetPos, Constants.MAX_SPEED, true, Constants.MAX_NAVIGATION_CORRECTIONS, Math.PI/180.0);
-        	Log.log("Move = " + move + ", thrust = " + ((ThrustMove)move).getThrust());
+        	if( move != null ) {
+        		Log.log("Move = " + move + ", thrust = " + ((ThrustMove)move).getThrust());
+        	}
         }else {
         	move = Navigation.navigateShipToDock(gameMap, ship, planet, Constants.MAX_SPEED);
         }
@@ -123,8 +128,8 @@ public class ClaimPlanet extends Assignment {
     @Override
     public String toString() {
         return "ClaimPlanet[" +
-                ", ship=" + nShipId +
-                ", planet=" + nTargetId +
+                ", ship=" + ship.getId() +
+                ", planet=" + planet.getId() +
                 "]";
     }
 

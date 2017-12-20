@@ -39,7 +39,6 @@ public class Bot {
         Log.log( "My Id = " + myId );
 
 
-        AssignmentList assignments = new AssignmentList();
 
         Strategy strategy = null;
         
@@ -49,14 +48,14 @@ public class Bot {
         	strategy = new StrategyBasic();
         }
         
-        strategy.getInitialAssignments( gameMap, assignments );
+        strategy.getInitialAssignments( gameMap );
         
         for (;;) {
         	Log.log("Starting a turn");
             moveList.clear();
             networking.updateMap(gameMap);
             
-            strategy.calculateMoves(gameMap, moveList, assignments);
+            strategy.calculateMoves(gameMap, moveList);
 
             Log.log("Sending Moves");
             Networking.sendMoves(moveList);
