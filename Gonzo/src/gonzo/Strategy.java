@@ -156,6 +156,126 @@ public abstract class Strategy {
 		
 
 	}
+	public static void attackAnyEnemyMultiplePlanets(final GameMap gameMap, final ArrayList<Move> moveList,
+			Set<Ship> usedShips, Set<Planet> claimedPlanets, Map<Integer,Integer> shipsPerPlanet) {
+
+		int numEnemyPlanets = 0;
+		for (final Planet planet : gameMap.getAllPlanets().values()) {
+			if( planet.isOwned() && ( planet.getOwner() != gameMap.getMyPlayerId())) {
+				numEnemyPlanets++;
+			}
+		}
+//		for (final Planet planet : gameMap.getAllPlanets().values()) {
+//			if( planet.isOwned() && ( planet.getOwner() != gameMap.getMyPlayerId())) {
+//				numEnemyPlanets++;
+//			}
+//		}
+		
+		int nMinShipsToAttackPlanet = 25;
+		int nAvailableShips = gameMap.getMyPlayer().getShips().size() - usedShips.size();
+		int numShipsPerPlanet = 0;
+//		if( numPlanetsToAttack > 0 ) {
+//			numShipsPerPlanet = nAvailableShips / numPlanetsToAttack;
+//		}
+
+		// Find out how many ships are already assigned to this opponent's planets
+		int nTotalShipsAssigned = 0;
+		int nPlanets = 0;
+		for (final Planet planet : gameMap.getAllPlanets().values()) {
+			if( planet.getOwner() != gameMap.getMyPlayerId() ) {
+				// Found an enemy planet
+				if( shipsPerPlanet.containsKey(planet.getId())) {
+					nTotalShipsAssigned += shipsPerPlanet.get(planet.getId());
+				}
+				nPlanets++;
+			}
+		}
+		int nTotalShips = nTotalShipsAssigned + nAvailableShips;
+		int numPlanetsToAttack = nTotalShips / nMinShipsToAttackPlanet;
+		if( numPlanetsToAttack > numEnemyPlanets) {
+			numPlanetsToAttack = numEnemyPlanets;
+		}
+
+		if( numPlanetsToAttack > 0 ) {
+			numShipsPerPlanet = nTotalShips / numPlanetsToAttack;
+		}else {
+			numShipsPerPlanet = nTotalShips;
+		}
+		
+		// We know how many planets we want to attack, and how many ships to use.
+		// Choose the planets closest to our center of mass
+		int numSelected = 0;
+		List<Planet> selectedPlanets = new ArrayList<Planet>();
+		
+		int nMinShipsPerPlanet = Integer.MAX_VALUE;
+		Position pos = getCenterOfMyShips(gameMap);
+		Map<Double, Entity> map = gameMap.nearbyEntitiesByDistance(pos);
+		for (Map.Entry<Double, Entity> entry : map.entrySet())
+	    {
+	    	Entity e = entry.getValue();
+	    	if( e.getClass() == Planet.class) {
+	    		Planet planet = (Planet)e;
+	    		if( planet.getOwner()  == gameMap.getMyPlayerId()) {
+	    			continue;
+	    		}
+	    		numSelected++;
+    			selectedPlanets.add( planet );
+    			int nNumShips = 0;
+				if( shipsPerPlanet.containsKey(planet.getId())) {
+					nNumShips = shipsPerPlanet.get(planet.getId());
+				}else {
+					shipsPerPlanet.put(planet.getId(), 0);
+				}
+				if( nNumShips < nMinShipsPerPlanet ) {
+					nMinShipsPerPlanet = nNumShips;
+				}
+
+    			if( numSelected == numPlanetsToAttack ) {
+    				break;
+    			}
+	    	}
+	    }
+		// Get a list of available ships
+		List<Ship> availableShips = new ArrayList<Ship>();
+		for( Ship ship : gameMap.getMyPlayer().getShips().values()) {
+			if( !usedShips.contains( ship )) {
+				availableShips.add(ship);
+			}
+		}
+		
+		// Now have planets choose the closest available ship
+		while( availableShips.size() > 0) {
+			int lastAvailableShips = availableShips.size();
+			nMinShipsPerPlanet++;
+			for( Planet planet : selectedPlanets ) {
+				int nNumShips = 0;
+				if(shipsPerPlanet.containsKey(planet.getId())) {
+					nNumShips = shipsPerPlanet.get(planet.getId());
+				}
+				if( nNumShips < nMinShipsPerPlanet ) {
+					attackEnemyPlanet( gameMap,  moveList, usedShips, availableShips, claimedPlanets, planet, shipsPerPlanet, 1);					
+//					if( availableShips.size() == lastAvailableShips ) {
+//						Log.log( "NO SHIP ASSIGNED!!!");
+//					}else {
+//						Log.log("Ship Assigned");
+//					}
+				}
+//				else {
+//					Log.log( "nNumShips = " + nNumShips +", nMinShipsPerPlanet = " + nMinShipsPerPlanet);
+//				}
+				if( availableShips.size() == 0 ) {
+					break;
+				}
+			}
+			if( availableShips.size() == lastAvailableShips ) {
+				Log.log( "Ship Assignment Not Working!!!");				
+				break;				
+			}
+		}
+		
+
+	}
+
 	public static void attackClosestEnemySinglePlanet(final GameMap gameMap, final ArrayList<Move> moveList,
 			Set<Ship> usedShips, Set<Planet> claimedPlanets, Map<Integer,Integer> shipsPerPlanet) {
 

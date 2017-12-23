@@ -115,7 +115,8 @@ public class StrategyShy extends Strategy {
 		// so use at least 20 ships to attack any planet
 			
 		//attackClosestEnemySinglePlanet(gameMap, moveList, usedShips, claimedPlanets, shipsPerPlanet);
-		attackStrongestEnemyMultiplePlanets(gameMap, moveList, usedShips, claimedPlanets, shipsPerPlanet);
+		//attackStrongestEnemyMultiplePlanets(gameMap, moveList, usedShips, claimedPlanets, shipsPerPlanet);
+		attackAnyEnemyMultiplePlanets(gameMap, moveList, usedShips, claimedPlanets, shipsPerPlanet);
 		
 		defendPlanets( gameMap, moveList );
 

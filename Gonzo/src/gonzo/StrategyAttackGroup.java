@@ -11,9 +11,10 @@ import gonzo.hlt.Move;
 import gonzo.hlt.Planet;
 import gonzo.hlt.Ship;
 
-public class StrategyAttack extends Strategy {
+public class StrategyAttackGroup extends Strategy {
 
 	AttackGroup group;
+	int nMove = 0;
 	@Override
 	public void getInitialAssignments(GameMap gameMap) {
 		group = new AttackGroup( gameMap.getMyPlayer().getShips().values());		
@@ -21,6 +22,7 @@ public class StrategyAttack extends Strategy {
 
 	@Override
 	public void calculateMoves(GameMap gameMap, ArrayList<Move> moveList) {
+		nMove++;
 		group.chooseMove();
 		
 		Set<Ship> usedShips = new HashSet<Ship>();

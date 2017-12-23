@@ -46,7 +46,8 @@ public class Bot {
         	strategy = new StrategyShy();
         }else {
         	//strategy = new StrategyBasic();
-        	strategy = new StrategyAttack();
+        	//strategy = new StrategyAttackGroup();
+        	strategy = new StrategyAttackVaried();
         }
         
         Log.log( "Initial ships:");
